@@ -22,12 +22,31 @@ export const registerUser = async (req: Request, res: Response):Promise<any> => 
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
-        if (existingUser) {
+         if (existingUser && existingUser.password) {
             return res.status(400).json({
                 success: false,
                 message: 'User already exists with this email'
             });
         }   
+        
+        if (existingUser && !existingUser.password) {
+            
+            existingUser.password = password;
+            await existingUser.save();
+
+            return res.status(201).json({
+                success: true,
+                message: 'User registered successfully. Please check your email for verification code.',
+                data: {
+                    userId: existingUser._id,
+                    email: existingUser.email,
+                    name: existingUser.name
+                }
+            });
+
+        }
+
+
 
         // Generate OTP
         const otp = generateOTP();
